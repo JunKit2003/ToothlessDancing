@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toothless Dancing</title>
+    <link rel="icon" type="image/jpeg" href="tab_image.jpg">
+</head>
+<body style="margin:0; background:#000; width:100vw; height:100vh; overflow:hidden;">
+    <audio id="bgm" src="DriftveilCity.mp3" loop style="display:none;"></audio>
+    <style>
+      #gif-stats-tab {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        z-index: 1001;
+        background: rgba(0,0,0,0.7);
+        color: #fff;
+        border-radius: 8px 8px 0 0;
+        font-family: sans-serif;
+        font-size: 16px;
+        min-width: 180px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      }
+      #gif-stats-header {
+        padding: 8px 16px;
+        cursor: pointer;
+        user-select: none;
+        border-radius: 8px 8px 0 0;
+        background: rgba(0,0,0,0.85);
+      }
+      #gif-stats-content {
+        display: none;
+        padding: 12px 16px 12px 16px;
+      }
+      #gif-stats-tab.open #gif-stats-content {
+        display: block;
+      }
+      .credit-box {
+        position:fixed;
+        bottom:20px;
+        right:20px;
+        z-index:1000;
+        color:#fff;
+        background:rgba(0,0,0,0.7);
+        padding:8px 16px;
+        border-radius:8px;
+        font-size:16px;
+        font-family:sans-serif;
+      }
+      @media (max-width: 600px) {
+        #gif-stats-tab {
+          font-size: 10px;
+          min-width: 100px;
+        }
+        #gif-stats-header {
+          padding: 4px 8px;
+        }
+        #gif-stats-content {
+          padding: 6px 8px 6px 8px;
+        }
+        .credit-box {
+          padding: 4px 8px;
+          font-size: 10px;
+          border-radius: 5px;
+        }
+      }
+    </style>
+    <div class="credit-box">
+      Credit: <a href="https://www.youtube.com/@cas" target="_blank" style="color:#4fc3f7; text-decoration:underline;">Cas van de Pol</a><br>
+      Made by: <a href="https://github.com/JunKit2003" target="_blank" style="color:#ffd700; text-decoration:underline;">JunKit2003</a>
+    </div>
+    <div id="gif-stats-tab">
+      <div id="gif-stats-header">Spawns &#9654;</div>
+      <div id="gif-stats-content">
+        <div>Toothless: <span id="count-toothless">0</span></div>
+        <div>Lightfury: <span id="count-lightfury">0</span></div>
+        <div>Party Toothless: <span id="count-party">0</span></div>
+        <div>Chill Toothless: <span id="count-chill">0</span></div>
+        <div>Red Wing Toothless: <span id="count-redwing">0</span></div>
+        <div>Smol Toothless: <span id="count-smol">0</span></div>
+      </div>
+    </div>
+    <script>
+      const MAX_GIFS = 100;
+      const GIF_SRC = 'toothless.gif'; // Make sure this file exists in your project directory
+      const LIGHTFURY_SRC = 'lightfury.gif'; // Make sure this file exists in your project directory
+      const PARTY_TOOTHLESS_SRC = 'partyToothless.gif'; // Make sure this file exists in your project directory
+      const CHILL_TOOTHLESS_SRC = 'chillToothless.gif';
+      const REDWING_TOOTHLESS_SRC = 'redWingToothless.gif';
+      const SMOL_TOOTHLESS_SRC = 'smolToothless.gif';
+      const GIF_DURATION = 10800; // Duration in ms (adjust to your GIF's length)
+      let gifCount = 0;
+      const startTime = Date.now();
+      let lastLightfuryTime = -Infinity; // Track last spawn time of lightfury
+
+      // Stats tracking
+      const gifCounts = {
+        toothless: 0,
+        lightfury: 0,
+        party: 0,
+        chill: 0,
+        redwing: 0,
+        smol: 0
+      };
+      function updateStatsUI() {
+        document.getElementById('count-toothless').textContent = gifCounts.toothless;
+        document.getElementById('count-lightfury').textContent = gifCounts.lightfury;
+        document.getElementById('count-party').textContent = gifCounts.party;
+        document.getElementById('count-chill').textContent = gifCounts.chill;
+        document.getElementById('count-redwing').textContent = gifCounts.redwing;
+        document.getElementById('count-smol').textContent = gifCounts.smol;
+      }
+      // Tab open/close logic
+      const statsTab = document.getElementById('gif-stats-tab');
+      const statsHeader = document.getElementById('gif-stats-header');
+      statsHeader.addEventListener('click', () => {
+        statsTab.classList.toggle('open');
+        statsHeader.innerHTML = statsTab.classList.contains('open') ? 'Spawns &#9660;' : 'Spawns &#9654;';
+      });
+
+      // Set GIF size based on device width
+      let GIF_SIZE = 150;
+      if (window.innerWidth < 600) {
+        GIF_SIZE = 40;
+      }
+
+      function addGif() {
+        if (gifCount >= MAX_GIFS) return;
+        gifCount++;
+        let src = GIF_SRC;
+        let countKey = 'toothless';
+        const now = Date.now();
+        // After 10 seconds, 0.1% chance to spawn lightfury.gif, but only if 15s since last spawn
+        if (
+          now - startTime > 10000 &&
+          now - lastLightfuryTime > 15000 &&
+          Math.random() < 0.001
+        ) {
+          src = LIGHTFURY_SRC;
+          lastLightfuryTime = now;
+          countKey = 'lightfury';
+        } else if (
+          now - startTime > 10000 &&
+          Math.random() < 0.01
+        ) {
+          // Standalone 0.1% chance for partyToothless.gif
+          src = PARTY_TOOTHLESS_SRC;
+          countKey = 'party';
+        } else if (
+          now - startTime > 10000 &&
+          Math.random() < 0.01
+        ) {
+          // Standalone 1% chance for chillToothless.gif
+          src = CHILL_TOOTHLESS_SRC;
+          countKey = 'chill';
+        } else if (
+          now - startTime > 10000 &&
+          Math.random() < 0.01
+        ) {
+          // Standalone 1% chance for redWingToothless.gif
+          src = REDWING_TOOTHLESS_SRC;
+          countKey = 'redwing';
+        } else if (
+          now - startTime > 10000 &&
+          Math.random() < 0.01
+        ) {
+          // Standalone 1% chance for smolToothless.gif
+          src = SMOL_TOOTHLESS_SRC;
+          countKey = 'smol';
+        }
+        gifCounts[countKey]++;
+        updateStatsUI();
+        const img = document.createElement('img');
+        img.src = src + '?t=' + Date.now(); // Prevent caching
+        img.style.position = 'absolute';
+        img.style.width = GIF_SIZE + 'px';
+        img.style.left = Math.random() * (window.innerWidth - GIF_SIZE) + 'px';
+        img.style.top = Math.random() * (window.innerHeight - GIF_SIZE) + 'px';
+        img.style.pointerEvents = 'none';
+        document.body.appendChild(img);
+        setTimeout(() => {
+          img.remove();
+          gifCount--;
+          // Immediately replace the removed GIF if we are below MAX_GIFS
+          if (gifCount < MAX_GIFS) {
+            addGif();
+          }
+        }, GIF_DURATION);
+      }
+
+      // Remove bombard() and instead use initial burst and replacement logic
+      function spawnInitialGifs(count, delay) {
+        let spawned = 0;
+        function spawnNext() {
+          if (spawned < count) {
+            addGif();
+            spawned++;
+            setTimeout(spawnNext, delay);
+          }
+        }
+        spawnNext();
+      }
+
+      // Start the initial burst
+      const spawnDelay = 10800 / MAX_GIFS; // 10.8 seconds divided by MAX_GIFS
+      spawnInitialGifs(MAX_GIFS, spawnDelay);
+
+      // Start background music on first user interaction
+      const bgm = document.getElementById('bgm');
+      function startBGM() {
+        if (bgm.paused) {
+          bgm.play();
+        }
+        window.removeEventListener('click', startBGM);
+        window.removeEventListener('keydown', startBGM);
+      }
+      window.addEventListener('click', startBGM);
+      window.addEventListener('keydown', startBGM);
+    </script>
+</body>
+</html> 
