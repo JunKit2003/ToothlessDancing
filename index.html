@@ -90,7 +90,6 @@
       const REDWING_TOOTHLESS_SRC = 'redWingToothless.gif';
       const SMOL_TOOTHLESS_SRC = 'smolToothless.gif';
       const GIF_DURATION = 10800; // Duration in ms (adjust to your GIF's length)
-      let gifCount = 0;
       const startTime = Date.now();
       let lastLightfuryTime = -Infinity; // Track last spawn time of lightfury
 
@@ -125,9 +124,26 @@
         GIF_SIZE = 40;
       }
 
+      // --- GIF Pool Implementation ---
+      const gifPool = [];
+      for (let i = 0; i < MAX_GIFS; i++) {
+        const img = document.createElement('img');
+        img.style.position = 'absolute';
+        img.style.width = GIF_SIZE + 'px';
+        img.style.pointerEvents = 'none';
+        img.style.display = 'none';
+        document.body.appendChild(img);
+        gifPool.push({ img, inUse: false, timeout: null });
+      }
+
+      function getAvailableGifSlot() {
+        return gifPool.find(slot => !slot.inUse);
+      }
+
       function addGif() {
-        if (gifCount >= MAX_GIFS) return;
-        gifCount++;
+        const slot = getAvailableGifSlot();
+        if (!slot) return; // Pool exhausted
+        slot.inUse = true;
         let src = GIF_SRC;
         let countKey = 'toothless';
         const now = Date.now();
@@ -144,46 +160,41 @@
           now - startTime > 10000 &&
           Math.random() < 0.01
         ) {
-          // Standalone 0.1% chance for partyToothless.gif
           src = PARTY_TOOTHLESS_SRC;
           countKey = 'party';
         } else if (
           now - startTime > 10000 &&
           Math.random() < 0.01
         ) {
-          // Standalone 1% chance for chillToothless.gif
           src = CHILL_TOOTHLESS_SRC;
           countKey = 'chill';
         } else if (
           now - startTime > 10000 &&
           Math.random() < 0.01
         ) {
-          // Standalone 1% chance for redWingToothless.gif
           src = REDWING_TOOTHLESS_SRC;
           countKey = 'redwing';
         } else if (
           now - startTime > 10000 &&
           Math.random() < 0.01
         ) {
-          // Standalone 1% chance for smolToothless.gif
           src = SMOL_TOOTHLESS_SRC;
           countKey = 'smol';
         }
         gifCounts[countKey]++;
         updateStatsUI();
-        const img = document.createElement('img');
-        img.src = src + '?t=' + Date.now(); // Prevent caching
-        img.style.position = 'absolute';
-        img.style.width = GIF_SIZE + 'px';
-        img.style.left = Math.random() * (window.innerWidth - GIF_SIZE) + 'px';
-        img.style.top = Math.random() * (window.innerHeight - GIF_SIZE) + 'px';
-        img.style.pointerEvents = 'none';
-        document.body.appendChild(img);
-        setTimeout(() => {
-          img.remove();
-          gifCount--;
-          // Immediately replace the removed GIF if we are below MAX_GIFS
-          if (gifCount < MAX_GIFS) {
+        // Set up the image
+        slot.img.src = src + '?t=' + Date.now(); // Prevent caching
+        slot.img.style.left = Math.random() * (window.innerWidth - GIF_SIZE) + 'px';
+        slot.img.style.top = Math.random() * (window.innerHeight - GIF_SIZE) + 'px';
+        slot.img.style.display = 'block';
+        // Hide after duration and mark as available
+        slot.timeout = setTimeout(() => {
+          slot.img.style.display = 'none';
+          slot.inUse = false;
+          slot.timeout = null;
+          // Immediately replace the removed GIF if we are below MAX_GIFS in use
+          if (gifPool.filter(s => s.inUse).length < MAX_GIFS) {
             addGif();
           }
         }, GIF_DURATION);
@@ -203,7 +214,7 @@
       }
 
       // Start the initial burst
-      const spawnDelay = 10800 / MAX_GIFS; // 10.8 seconds divided by MAX_GIFS
+      const spawnDelay = 10800 / MAX_GIFS;
       spawnInitialGifs(MAX_GIFS, spawnDelay);
 
       // Start background music on first user interaction
